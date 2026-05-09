@@ -1,6 +1,6 @@
 const SUPABASE_URL = 'https://jofpwwcoxpkphgdyvole.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvZnB3d2NveHBrcGhnZHl2b2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODA4OTYsImV4cCI6MjA5Mzg1Njg5Nn0.kzgJYNA2jIhZHxZ5OTr1GL7_3RZkj1-B3ijM2XXrVH0';
-const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eon';
+const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 const CONFIRM_PAYMENT_URL = `${SUPABASE_URL}/functions/v1/confirm-payment`;
 
 window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
