@@ -51,6 +51,13 @@
   <script>
     let currentProduct = null;
     let qty = 1;
+    const productStore = {};
+
+    function esc(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     async function loadProducts() {
       const { data, error } = await window.supabase
@@ -65,22 +72,26 @@
         return;
       }
 
+      data.forEach(p => { productStore[p.id] = p; });
+
       container.innerHTML = data.map(p => `
         <div class="card">
-          <img class="product-img" src="${p.image_url || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.name}">
+          <img class="product-img" src="${esc(p.image_url) || 'https://placehold.co/400x400?text=No+Image'}" alt="${esc(p.name)}">
           <div class="product-body">
-            <div class="product-name">${p.name}</div>
-            <div class="product-desc">${p.description || ''}</div>
+            <div class="product-name">${esc(p.name)}</div>
+            <div class="product-desc">${esc(p.description)}</div>
             <div class="product-footer">
               <span class="product-price">${formatPrice(p.price)}</span>
-              <button class="btn btn-primary btn-sm" onclick='openModal(${JSON.stringify(p)})'>구매하기</button>
+              <button class="btn btn-primary btn-sm" onclick="openModal('${esc(p.id)}')">구매하기</button>
             </div>
           </div>
         </div>
       `).join('');
     }
 
-    function openModal(product) {
+    function openModal(productId) {
+      const product = productStore[productId];
+      if (!product) return;
       currentProduct = product;
       qty = 1;
       document.getElementById('modal-img').src = product.image_url || 'https://placehold.co/400x400?text=No+Image';
