@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 - 잔재미 굿즈샵</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">잔재미 굿즈샵</a>
+    <div id="nav-right" class="nav-right"></div>
+  </nav>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">잔재미 굿즈샵</div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">로그인</button>
+        <button class="tab-btn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+
+      <div id="alert"></div>
+
+      <div id="tab-login">
+        <div class="form-group">
+          <label>이메일</label>
+          <input id="login-email" type="email" placeholder="example@email.com">
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input id="login-pw" type="password" placeholder="비밀번호">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="login()">로그인</button>
+      </div>
+
+      <div id="tab-signup" style="display:none">
+        <div class="form-group">
+          <label>이메일</label>
+          <input id="signup-email" type="email" placeholder="example@email.com">
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input id="signup-pw" type="password" placeholder="6자 이상">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="signup()">회원가입</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0) === (tab === 'login'));
+      });
+      document.getElementById('tab-login').style.display = tab === 'login' ? '' : 'none';
+      document.getElementById('tab-signup').style.display = tab === 'signup' ? '' : 'none';
+      document.getElementById('alert').innerHTML = '';
+    }
+
+    function showAlert(msg, type = 'error') {
+      document.getElementById('alert').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+
+    async function login() {
+      const email = document.getElementById('login-email').value.trim();
+      const pw = document.getElementById('login-pw').value;
+      if (!email || !pw) return showAlert('이메일과 비밀번호를 입력해주세요.');
+
+      const { error } = await window.supabase.auth.signInWithPassword({ email, password: pw });
+      if (error) return showAlert(error.message);
+      location.href = 'index.html';
+    }
+
+    async function signup() {
+      const email = document.getElementById('signup-email').value.trim();
+      const pw = document.getElementById('signup-pw').value;
+      if (!email || !pw) return showAlert('이메일과 비밀번호를 입력해주세요.');
+      if (pw.length < 6) return showAlert('비밀번호는 6자 이상이어야 합니다.');
+
+      const { error } = await window.supabase.auth.signUp({ email, password: pw });
+      if (error) return showAlert(error.message);
+      showAlert('회원가입 완료! 로그인해주세요.', 'success');
+      switchTab('login');
+    }
+
+    // Enter 키 지원
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const loginVisible = document.getElementById('tab-login').style.display !== 'none';
+      if (loginVisible) login(); else signup();
+    });
+
+    updateNav();
+    getSession().then(s => { if (s) location.href = 'index.html'; });
+  </script>
+</body>
+</html>

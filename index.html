@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>잔재미코딩 굿즈샵</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">잔재미 굿즈샵</a>
+    <div id="nav-right" class="nav-right"></div>
+  </nav>
+
+  <div class="container">
+    <h1 class="page-title">상품 목록</h1>
+    <div id="products" class="products-grid">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- 결제 모달 -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <h2 class="modal-title">주문하기</h2>
+      <div class="modal-product">
+        <img id="modal-img" src="" alt="">
+        <div class="modal-product-info">
+          <div id="modal-name" class="modal-product-name"></div>
+          <div id="modal-price" class="modal-product-price"></div>
+        </div>
+      </div>
+      <div class="qty-row">
+        <span>수량</span>
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <span id="modal-qty">1</span>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <div class="modal-total">합계: <strong id="modal-total"></strong></div>
+      <div id="modal-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">취소</button>
+        <button id="pay-btn" class="btn btn-primary" style="flex:2" onclick="pay()">결제하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://js.tosspayments.com/v1/payment"></script>
+  <script src="js/config.js"></script>
+  <script>
+    let currentProduct = null;
+    let qty = 1;
+
+    async function loadProducts() {
+      const { data, error } = await window.supabase
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('created_at');
+
+      const container = document.getElementById('products');
+      if (error || !data?.length) {
+        container.innerHTML = '<p style="color:var(--text-muted)">등록된 상품이 없습니다.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(p => `
+        <div class="card">
+          <img class="product-img" src="${p.image_url || 'https://placehold.co/400x400?text=No+Image'}" alt="${p.name}">
+          <div class="product-body">
+            <div class="product-name">${p.name}</div>
+            <div class="product-desc">${p.description || ''}</div>
+            <div class="product-footer">
+              <span class="product-price">${formatPrice(p.price)}</span>
+              <button class="btn btn-primary btn-sm" onclick='openModal(${JSON.stringify(p)})'>구매하기</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openModal(product) {
+      currentProduct = product;
+      qty = 1;
+      document.getElementById('modal-img').src = product.image_url || 'https://placehold.co/400x400?text=No+Image';
+      document.getElementById('modal-name').textContent = product.name;
+      document.getElementById('modal-price').textContent = formatPrice(product.price);
+      document.getElementById('modal-qty').textContent = '1';
+      document.getElementById('modal-total').textContent = formatPrice(product.price);
+      document.getElementById('modal-alert').innerHTML = '';
+      document.getElementById('pay-btn').disabled = false;
+      document.getElementById('pay-btn').textContent = '결제하기';
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function changeQty(delta) {
+      qty = Math.max(1, Math.min(99, qty + delta));
+      document.getElementById('modal-qty').textContent = qty;
+      document.getElementById('modal-total').textContent = formatPrice(currentProduct.price * qty);
+    }
+
+    async function pay() {
+      const session = await getSession();
+      if (!session) {
+        location.href = 'auth.html';
+        return;
+      }
+
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.textContent = '처리중...';
+
+      const amount = currentProduct.price * qty;
+      const tossOrderId = 'order_' + Date.now();
+
+      const { error } = await window.supabase.from('orders').insert({
+        user_id: session.user.id,
+        product_id: currentProduct.id,
+        product_name: currentProduct.name,
+        product_image: currentProduct.image_url,
+        quantity: qty,
+        amount,
+        status: 'pending',
+        toss_order_id: tossOrderId,
+      });
+
+      if (error) {
+        document.getElementById('modal-alert').innerHTML =
+          '<div class="alert alert-error">주문 생성 실패: ' + error.message + '</div>';
+        btn.disabled = false;
+        btn.textContent = '결제하기';
+        return;
+      }
+
+      const base = window.location.href.replace(/\/[^/]*(\?.*)?$/, '');
+      const toss = TossPayments(TOSS_CLIENT_KEY);
+      toss.requestPayment('카드', {
+        amount,
+        orderId: tossOrderId,
+        orderName: currentProduct.name + (qty > 1 ? ' x' + qty : ''),
+        successUrl: base + '/success.html',
+        failUrl: base + '/fail.html',
+        customerEmail: session.user.email,
+      });
+    }
+
+    // 모달 바깥 클릭 시 닫기
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    updateNav();
+    loadProducts();
+  </script>
+</body>
+</html>

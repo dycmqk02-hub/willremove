@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결제 실패 - 잔재미 굿즈샵</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">잔재미 굿즈샵</a>
+    <div id="nav-right" class="nav-right"></div>
+  </nav>
+
+  <div class="result-wrap">
+    <div class="result-card">
+      <div class="result-icon">❌</div>
+      <div class="result-title">결제 실패</div>
+      <div id="reason" class="result-sub"></div>
+      <div class="result-links">
+        <a href="index.html" class="btn btn-primary">다시 시도</a>
+        <a href="orders.html" class="btn btn-outline">내 주문 보기</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    document.getElementById('reason').textContent =
+      params.get('message') || '결제가 취소되었습니다.';
+    updateNav();
+  </script>
+</body>
+</html>

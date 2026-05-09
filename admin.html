@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 - 잔재미 굿즈샵</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">잔재미 굿즈샵</a>
+    <div id="nav-right" class="nav-right"></div>
+  </nav>
+
+  <div class="container">
+    <h1 class="page-title">주문 관리</h1>
+    <div id="stats" class="stats-grid"></div>
+    <div id="orders"><div class="spinner"></div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    async function loadOrders() {
+      const session = await requireAdmin();
+      if (!session) return;
+
+      const { data, error } = await window.supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        document.getElementById('orders').innerHTML =
+          '<p style="color:var(--danger)">오류: ' + error.message + '</p>';
+        return;
+      }
+
+      const paid = data.filter(o => o.status === 'paid');
+      const pending = data.filter(o => o.status === 'pending');
+      const revenue = paid.reduce((sum, o) => sum + o.amount, 0);
+
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">전체 주문</div>
+          <div class="stat-value">${data.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">결제 완료</div>
+          <div class="stat-value" style="color:var(--success)">${paid.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">대기 중</div>
+          <div class="stat-value" style="color:var(--warning)">${pending.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">총 매출</div>
+          <div class="stat-value" style="font-size:1.2rem">${formatPrice(revenue)}</div>
+        </div>
+      `;
+
+      if (!data.length) {
+        document.getElementById('orders').innerHTML =
+          '<p style="color:var(--text-muted)">주문이 없습니다.</p>';
+        return;
+      }
+
+      document.getElementById('orders').innerHTML = `
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>주문번호</th><th>사용자</th><th>상품</th><th>수량</th><th>금액</th><th>상태</th><th>주문일시</th>
+            </tr></thead>
+            <tbody>
+              ${data.map(o => `
+                <tr>
+                  <td style="font-size:.8rem;color:var(--text-muted)">${o.toss_order_id || o.id.slice(0, 8)}</td>
+                  <td style="font-size:.82rem">${o.user_id.slice(0, 8)}…</td>
+                  <td>
+                    ${o.product_image
+                      ? `<img src="${o.product_image}" style="width:36px;height:36px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:6px">`
+                      : ''}
+                    ${o.product_name}
+                  </td>
+                  <td>${o.quantity}</td>
+                  <td>${formatPrice(o.amount)}</td>
+                  <td>${statusBadge(o.status)}</td>
+                  <td>${formatDate(o.created_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    updateNav();
+    loadOrders();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결제 완료 - 잔재미 굿즈샵</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">잔재미 굿즈샵</a>
+    <div id="nav-right" class="nav-right"></div>
+  </nav>
+
+  <div class="result-wrap">
+    <div class="result-card">
+      <div id="content"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    async function confirmPayment() {
+      const params = new URLSearchParams(location.search);
+      const paymentKey = params.get('paymentKey');
+      const orderId = params.get('orderId');
+      const amount = Number(params.get('amount'));
+
+      let html;
+      try {
+        const res = await fetch(CONFIRM_PAYMENT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ paymentKey, orderId, amount }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || '결제 확인 실패');
+
+        html = `
+          <div class="result-icon">✅</div>
+          <div class="result-title">결제 완료!</div>
+          <div class="result-sub">주문이 성공적으로 처리되었습니다.</div>
+          <div class="result-detail">
+            <p>주문번호: <span>${orderId}</span></p>
+            <p>결제금액: <span>${formatPrice(amount)}</span></p>
+          </div>
+          <div class="result-links">
+            <a href="orders.html" class="btn btn-primary">내 주문 보기</a>
+            <a href="index.html" class="btn btn-outline">쇼핑 계속</a>
+          </div>
+        `;
+      } catch (e) {
+        html = `
+          <div class="result-icon">❌</div>
+          <div class="result-title">결제 처리 오류</div>
+          <div class="result-sub">${e.message}</div>
+          <div class="result-links">
+            <a href="index.html" class="btn btn-outline">홈으로</a>
+          </div>
+        `;
+      }
+
+      document.getElementById('content').innerHTML = html;
+    }
+
+    updateNav();
+    confirmPayment();
+  </script>
+</body>
+</html>
