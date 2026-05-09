@@ -71,7 +71,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 프로젝트: 잔재미코딩 굿즈샵
 
 **기술 스택:** HTML/CSS/Vanilla JS + Supabase + Toss Payments (테스트 모드)
-**호스팅:** GitHub Pages (`https://dycmqk02-hub.github.io/vibecoding_web/`)
+**호스팅:** GitHub Pages (`https://dycmqk02-hub.github.io/willremove/`)
 
 ### 개발 방법
 빌드 없음. 파일을 직접 브라우저에서 열거나 로컬 서버 실행:

@@ -149,3 +149,4 @@ python -m http.server 3000
 ```
 
 GitHub Pages 배포: `main` 브랜치에 push하면 자동 반영.
+- URL: `https://dycmqk02-hub.github.io/willremove/`
